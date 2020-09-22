@@ -1,5 +1,7 @@
 package org.example.interpreter;
 
+import com.google.gson.GsonBuilder;
+import org.example.TreePrinter;
 import org.example.lexer.Lexer;
 import org.example.lexer.Token;
 import org.example.lexer.Type;
@@ -46,6 +48,7 @@ public class Interpreter {
 
     public int interpreter() {
         AST tree = parser.parse();
+        //TreePrinter.printAST(tree);
         return visit(tree);
     }
 }
