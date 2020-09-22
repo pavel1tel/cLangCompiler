@@ -1,14 +1,7 @@
 package org.example.interpreter;
 
-import com.google.gson.GsonBuilder;
-import org.example.TreePrinter;
-import org.example.lexer.Lexer;
-import org.example.lexer.Token;
 import org.example.lexer.Type;
-import org.example.parser.AST;
-import org.example.parser.BinOp;
-import org.example.parser.Num;
-import org.example.parser.Parser;
+import org.example.parser.*;
 
 public class Interpreter {
     private final Parser parser;
@@ -22,6 +15,8 @@ public class Interpreter {
             return visit_BinOp(node);
         } else if (node instanceof Num) {
             return visit_Num(node);
+        } else if (node instanceof UnaryOp) {
+            return visit_UnaryOp(node);
         }
         throw new RuntimeException();
     }
@@ -38,6 +33,17 @@ public class Interpreter {
         }
         if (node.getOp().getType().equals(Type.DIV)) {
             return visit(node.getLeft()) / visit(node.getRight());
+        }
+        throw new RuntimeException();
+    }
+
+    public int visit_UnaryOp(AST node) {
+        Type op = node.getOp().getType();
+        if (op.equals(Type.MINUS)){
+            return -visit(node.getExpr());
+        }
+        if (op.equals(Type.PLUS)){
+            return +visit(node.getExpr());
         }
         throw new RuntimeException();
     }

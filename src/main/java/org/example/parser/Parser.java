@@ -24,6 +24,14 @@ public class Parser {
     private AST factor() {
         // factor : INTEGER | LPAREN expr RPAREN
         Token token = currentToken;
+        if (token.getType().equals(Type.PLUS)) {
+            eat(Type.PLUS);
+            return new UnaryOp(token, factor());
+        }
+        if (token.getType().equals(Type.MINUS)) {
+            eat(Type.MINUS);
+            return new UnaryOp(token, factor());
+        }
         if (token.getType().equals(Type.INTEGER)) {
             eat(Type.INTEGER);
             return new Num(token);

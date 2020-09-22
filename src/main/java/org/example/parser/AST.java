@@ -8,10 +8,15 @@ public abstract class AST {
     private Token token;
     private Token op;
     private Token value;
+    private AST expr;
 
     public abstract AST getLeft();
     public abstract AST getRight();
     public abstract Token getToken();
     public abstract Token getOp();
     public abstract String getValue();
+
+    public AST getExpr() {
+        return null;
+    }
 }
