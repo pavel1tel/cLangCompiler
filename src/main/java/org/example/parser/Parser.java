@@ -1,17 +1,19 @@
-package org.example;
+package org.example.parser;
 
-public class Interpreter {
+import org.example.lexer.Lexer;
+import org.example.lexer.Token;
+import org.example.lexer.Type;
+
+public class Parser {
     private final Lexer lexer;
     private Token currentToken;
 
-    public Interpreter(Lexer lexer) {
+    public Parser(Lexer lexer) {
         this.lexer = lexer;
         this.currentToken = lexer.getNextToken();
     }
 
-
-
-    public void eat(Type type) {
+    private void eat(Type type) {
         if (currentToken.getType().equals(type)) {
             currentToken = lexer.getNextToken();
         } else {
@@ -19,50 +21,52 @@ public class Interpreter {
         }
     }
 
-    public Integer factor() {
+    private AST factor() {
         // factor : INTEGER | LPAREN expr RPAREN
         Token token = currentToken;
         if (token.getType().equals(Type.INTEGER)) {
             eat(Type.INTEGER);
-            return Integer.parseInt(token.getValue());
+            return new Num(token);
         } else if (token.getType().equals(Type.LPARENT)) {
             eat(Type.LPARENT);
-            Integer result = expr();
+            AST node = expr();
             eat(Type.RPARENT);
-            return result;
+            return node;
         }
         throw new RuntimeException();
     }
 
-    public int term() {
+    private AST term() {
         // term : factor ((MUL | DIV) factor)
-        Integer result = factor();
+        AST node = factor();
         while (currentToken.getType().equals(Type.DIV) || currentToken.getType().equals(Type.MUL)){
             Token token = currentToken;
             if (token.getType().equals(Type.DIV)){
                 eat(Type.DIV);
-                result = result / factor();
             } else if (token.getType().equals(Type.MUL)) {
                 eat(Type.MUL);
-                result = result * factor();
             }
+            node = new BinOp(node, factor(), token);
         }
-        return result;
+        return node;
     }
 
-    public int expr() {
+    private AST expr() {
         // expr: term(PLUS | MINUS) term)
-        Integer result = term();
+        AST node = term();
         while (currentToken.getType().equals(Type.PLUS) || currentToken.getType().equals(Type.MINUS)){
             Token token = currentToken;
             if (token.getType().equals(Type.PLUS)){
                 eat(Type.PLUS);
-                result = result + term();
             } else {
                 eat(Type.MINUS);
-                result = result - term();
             }
+            node = new BinOp(node, term(), token);
         }
-        return result;
+        return node;
+    }
+
+    public AST parse() {
+        return expr();
     }
 }

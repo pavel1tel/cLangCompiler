@@ -1,5 +1,9 @@
 package org.example;
 
+import org.example.interpreter.Interpreter;
+import org.example.lexer.Lexer;
+import org.example.parser.Parser;
+
 import java.util.Scanner;
 
 /**
@@ -15,8 +19,9 @@ public class App
             System.out.print(">>>");
             String input = scanner.nextLine();
             Lexer lexer = new Lexer(input);
-            Interpreter interpreter = new Interpreter(lexer);
-            System.out.println(interpreter.expr());
+            Parser parser = new Parser(lexer);
+            Interpreter interpreter = new Interpreter(parser);
+            System.out.println(interpreter.interpreter());
         }
     }
 }
