@@ -60,6 +60,14 @@ public class Lexer {
                 advance();
                 return new Token(Type.DIV, "/");
             }
+            if (currentChar.equals('(')){
+                advance();
+                return new Token(Type.LPARENT, "(");
+            }
+            if (currentChar.equals(')')){
+                advance();
+                return new Token(Type.RPARENT, ")");
+            }
             throw new RuntimeException();
         }
         return new Token(Type.EOF, null);

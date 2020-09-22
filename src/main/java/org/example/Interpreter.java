@@ -20,10 +20,18 @@ public class Interpreter {
     }
 
     public Integer factor() {
-        // factor : INTEGER
+        // factor : INTEGER | LPAREN expr RPAREN
         Token token = currentToken;
-        eat(Type.INTEGER);
-        return Integer.parseInt(token.getValue());
+        if (token.getType().equals(Type.INTEGER)) {
+            eat(Type.INTEGER);
+            return Integer.parseInt(token.getValue());
+        } else if (token.getType().equals(Type.LPARENT)) {
+            eat(Type.LPARENT);
+            Integer result = expr();
+            eat(Type.RPARENT);
+            return result;
+        }
+        throw new RuntimeException();
     }
 
     public int term() {
