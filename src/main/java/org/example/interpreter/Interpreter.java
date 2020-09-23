@@ -9,10 +9,12 @@ import java.io.FileWriter;
 public class Interpreter {
     private final FileWriter sourceWriter;
     private final Parser parser;
+    private final CallStack callStack;
 
     public Interpreter(FileWriter sourceWriter, Parser parser) {
         this.sourceWriter = sourceWriter;
         this.parser = parser;
+        this.callStack = new CallStack();
     }
 
     public void visit(AST node) {
@@ -43,6 +45,8 @@ public class Interpreter {
 
     @SneakyThrows
     private void visit_Main(AST node) {
+        callStack.push(node);
+        sourceWriter.write(node.getValueType().getToken().getValue().toLowerCase()+ " ");
         sourceWriter.write("main()");
         visit(node.getExpr());
     }
@@ -87,14 +91,14 @@ public class Interpreter {
     @SneakyThrows
     public void visit_UnaryOp(AST node) {
         Type op = node.getOp().getType();
-        if (op.equals(Type.MINUS)){
+        if (op.equals(Type.MINUS)) {
             sourceWriter.write("(");
             sourceWriter.write("-");
             visit(node.getExpr());
             sourceWriter.write(")");
             return;
         }
-        if (op.equals(Type.PLUS)){
+        if (op.equals(Type.PLUS)) {
             sourceWriter.write("(");
             sourceWriter.write("+");
             visit(node.getExpr());
@@ -107,8 +111,13 @@ public class Interpreter {
     @SneakyThrows
     public void visit_Compound(AST node) {
         sourceWriter.write("{");
-        for (AST child : node.getChildren()){
-            visit(child);
+        for (AST child : node.getChildren()) {
+            if(child instanceof ReturnOp){
+                visit(child);
+                return;
+            } else {
+                visit(child);
+            }
             sourceWriter.write(";");
         }
         sourceWriter.write("}");
@@ -116,8 +125,22 @@ public class Interpreter {
 
     @SneakyThrows
     public void visit_Return(AST node) {
-        sourceWriter.write("return ");
+        AST func = callStack.peek();
+        if (func.getValueType().getToken().getType().equals(Type.INT) && !(
+                node.getValueType().getToken().getType().equals(Type.DECIMAL) ||
+                        node.getValueType().getToken().getType().equals(Type.HEX)
+        )) {
+            throw new RuntimeException("wrong return type");
+        }
+        if (func.getValueType().getToken().getType().equals(Type.CHAR) && (
+                node.getValueType().getToken().getType().equals(Type.DECIMAL) ||
+                        node.getValueType().getToken().getType().equals(Type.HEX)
+        )) {
+            throw new RuntimeException("wrong return type");
+        }
+            sourceWriter.write("return ");
         visit(node.getExpr());
+        callStack.pop();
     }
 
     @SneakyThrows
