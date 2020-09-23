@@ -114,6 +114,8 @@ public class Interpreter {
         for (AST child : node.getChildren()) {
             if(child instanceof ReturnOp){
                 visit(child);
+                sourceWriter.write(";");
+                sourceWriter.write("}");
                 return;
             } else {
                 visit(child);
