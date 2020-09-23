@@ -1,5 +1,6 @@
 package org.example.interpreter;
 
+import org.example.TreePrinter;
 import org.example.lexer.Type;
 import org.example.parser.*;
 
@@ -17,6 +18,12 @@ public class Interpreter {
             return visit_Num(node);
         } else if (node instanceof UnaryOp) {
             return visit_UnaryOp(node);
+        } else if (node instanceof Compound) {
+             return visit_Compound(node);
+        } else if (node instanceof ReturnOp) {
+            return visit_Return(node);
+        } else if (node instanceof NoOp) {
+            return visit_NoOp(node);
         }
         throw new RuntimeException();
     }
@@ -48,8 +55,23 @@ public class Interpreter {
         throw new RuntimeException();
     }
 
+    public int visit_Compound(AST node) {
+        for (AST child : node.getChildren()){
+            return visit(child);
+        }
+        throw new RuntimeException();
+    }
+
+    public int visit_Return(AST node) {
+        return visit(node.getExpr());
+    }
+
     public int visit_Num(AST node) {
         return Integer.parseInt(node.getValue());
+    }
+
+    public int visit_NoOp(AST node) {
+        return 0;
     }
 
     public int interpreter() {

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+//todo add unary node support
 public class TreePrinter {
     public static <T extends Comparable<?>> void printAST(AST root) {
         int maxLevel = TreePrinter.maxLevel(root);

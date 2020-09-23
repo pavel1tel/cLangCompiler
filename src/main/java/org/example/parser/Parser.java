@@ -4,6 +4,9 @@ import org.example.lexer.Lexer;
 import org.example.lexer.Token;
 import org.example.lexer.Type;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Parser {
     private final Lexer lexer;
     private Token currentToken;
@@ -12,6 +15,40 @@ public class Parser {
         this.lexer = lexer;
         this.currentToken = lexer.getNextToken();
     }
+
+    public AST compoundStatement() {
+        eat(Type.LBRACER);
+        List<AST> nodes = statementList();
+        eat(Type.RBRACER);
+        return new Compound(nodes);
+    }
+
+    public List<AST> statementList() {
+        AST node = statement();
+        List<AST> result = new ArrayList<>();
+        result.add(node);
+        while (currentToken.getType().equals(Type.SEMI)) {
+            eat(Type.SEMI);
+            result.add(statement());
+        }
+        return result;
+    }
+
+    public AST statement() {
+        if (currentToken.getType().equals(Type.LBRACER)) {
+            return compoundStatement();
+        } else if (currentToken.getType().equals(Type.RETURN)) {
+            return returnStatement();
+        } else {
+            return new NoOp();
+        }
+    }
+
+    public AST returnStatement() {
+        eat(Type.RETURN);
+        return new ReturnOp(expr());
+    }
+
 
     private void eat(Type type) {
         if (currentToken.getType().equals(type)) {
@@ -47,9 +84,9 @@ public class Parser {
     private AST term() {
         // term : factor ((MUL | DIV) factor)
         AST node = factor();
-        while (currentToken.getType().equals(Type.DIV) || currentToken.getType().equals(Type.MUL)){
+        while (currentToken.getType().equals(Type.DIV) || currentToken.getType().equals(Type.MUL)) {
             Token token = currentToken;
-            if (token.getType().equals(Type.DIV)){
+            if (token.getType().equals(Type.DIV)) {
                 eat(Type.DIV);
             } else if (token.getType().equals(Type.MUL)) {
                 eat(Type.MUL);
@@ -62,9 +99,9 @@ public class Parser {
     private AST expr() {
         // expr: term(PLUS | MINUS) term)
         AST node = term();
-        while (currentToken.getType().equals(Type.PLUS) || currentToken.getType().equals(Type.MINUS)){
+        while (currentToken.getType().equals(Type.PLUS) || currentToken.getType().equals(Type.MINUS)) {
             Token token = currentToken;
-            if (token.getType().equals(Type.PLUS)){
+            if (token.getType().equals(Type.PLUS)) {
                 eat(Type.PLUS);
             } else {
                 eat(Type.MINUS);
@@ -75,6 +112,6 @@ public class Parser {
     }
 
     public AST parse() {
-        return expr();
+        return compoundStatement();
     }
 }

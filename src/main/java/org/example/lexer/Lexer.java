@@ -11,6 +11,25 @@ public class Lexer {
         currentChar = text.charAt(pos);
     }
 
+    public Character peek() {
+        int peek_pos = pos + 1;
+        if(pos >(text.length()-1)) {
+            currentChar = null;
+        } else {
+            return text.charAt(peek_pos);
+        }
+        throw new RuntimeException();
+    }
+
+    public Token id() {
+        StringBuilder result = new StringBuilder();
+        while (currentChar != null && (Character.isAlphabetic(currentChar) || Character.isDigit(currentChar))){
+            result.append(currentChar.toString());
+            advance();
+        }
+        return new Token(Type.valueOf(result.toString().toUpperCase()), result.toString());
+    }
+
     public void advance() {
         pos++;
         if(pos >(text.length()-1)) {
@@ -44,6 +63,9 @@ public class Lexer {
             if (Character.isDigit(currentChar)) {
                 return new Token(Type.INTEGER, parseInteger());
             }
+            if(Character.isAlphabetic(currentChar)) {
+                return id();
+            }
             if (currentChar.equals('+')){
                 advance();
                 return new Token(Type.PLUS, "+");
@@ -67,6 +89,18 @@ public class Lexer {
             if (currentChar.equals(')')){
                 advance();
                 return new Token(Type.RPARENT, ")");
+            }
+            if (currentChar.equals(';')){
+                advance();
+                return new Token(Type.SEMI, ";");
+            }
+            if (currentChar.equals('{')){
+                advance();
+                return new Token(Type.LBRACER, "{");
+            }
+            if (currentChar.equals('}')){
+                advance();
+                return new Token(Type.RBRACER, "}");
             }
             throw new RuntimeException();
         }
