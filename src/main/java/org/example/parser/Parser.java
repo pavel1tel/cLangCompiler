@@ -17,10 +17,23 @@ public class Parser {
     }
 
     public AST mainFunction() {
+        AST valueType = typeSpec();
         eat(Type.MAIN);
         eat(Type.LPARENT);
         eat(Type.RPARENT);
-        return new MainBlock(compoundStatement());
+        return new MainBlock(compoundStatement(), valueType);
+    }
+
+    public AST typeSpec() {
+        Token token = currentToken;
+        if(currentToken.getType().equals(Type.INT)){
+            eat(Type.INT);
+        } else if (currentToken.getType().equals(Type.CHAR)){
+            eat(Type.CHAR);
+        } else {
+            throw new RuntimeException();
+        }
+        return new VType(token);
     }
 
     public AST compoundStatement() {
@@ -53,7 +66,8 @@ public class Parser {
 
     public AST returnStatement() {
         eat(Type.RETURN);
-        return new ReturnOp(expr());
+        VType vType = new VType(currentToken);
+        return new ReturnOp(expr(), vType);
     }
 
 
