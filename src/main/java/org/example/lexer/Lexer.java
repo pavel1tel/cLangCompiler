@@ -1,5 +1,8 @@
 package org.example.lexer;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Lexer {
     private String text;
     private Integer pos;
@@ -57,7 +60,14 @@ public class Lexer {
     public String parseHex() {
         StringBuilder result = new StringBuilder();
         result.append("0x");
-        while (currentChar != null && Character.isDigit(currentChar)){
+        List<Character> hexCHars = new ArrayList<>();
+        hexCHars.add('a');
+        hexCHars.add('b');
+        hexCHars.add('c');
+        hexCHars.add('d');
+        hexCHars.add('e');
+        hexCHars.add('f');
+        while (currentChar != null && (Character.isDigit(currentChar) ||  hexCHars.contains(currentChar))){
             result.append(currentChar);
             advance();
         }
@@ -71,7 +81,6 @@ public class Lexer {
                 continue;
             }
             if (Character.isDigit(currentChar) && currentChar != '0') {
-                System.out.println(true);
                 return new Token(Type.DECIMAL, parseInteger());
             }
 

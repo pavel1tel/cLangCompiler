@@ -1,3 +1,3 @@
 main () {
-return 0x11;
+return 0xab + 5 * 0x5ca;
 }
