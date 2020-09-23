@@ -7,7 +7,7 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
-public class CallStack{
+public class CallStack implements Stack<AST>{
     Deque<AST> stack = new LinkedList<>();
 
     public void push(AST func) {

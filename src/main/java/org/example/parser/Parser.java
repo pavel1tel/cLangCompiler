@@ -94,6 +94,10 @@ public class Parser {
             eat(Type.DECIMAL);
             return new Num(token, new VType(new Token(Type.DECIMAL, "DECIMAL")));
         }
+        if (token.getType().equals(Type.CHAR)){
+            eat(Type.CHAR);
+            return new Char(token, new VType(new Token(Type.CHAR, "CHAR")));
+        }
         if (token.getType().equals(Type.HEX)) {
             eat(Type.HEX);
             return new Num(token, new VType(new Token(Type.HEX, "HEX")));

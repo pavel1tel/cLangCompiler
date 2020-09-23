@@ -9,7 +9,7 @@ import java.io.FileWriter;
 public class Interpreter {
     private final FileWriter sourceWriter;
     private final Parser parser;
-    private final CallStack callStack;
+    private final Stack<AST> callStack;
 
     public Interpreter(FileWriter sourceWriter, Parser parser) {
         this.sourceWriter = sourceWriter;
@@ -39,8 +39,16 @@ public class Interpreter {
         } else if (node instanceof MainBlock) {
             visit_Main(node);
             return;
+        } else if (node instanceof Char) {
+            visit_Char(node);
+            return;
         }
         throw new RuntimeException();
+    }
+
+    @SneakyThrows
+    private void visit_Char(AST node) {
+        sourceWriter.write("'" + node.getValue() + "'");
     }
 
     @SneakyThrows

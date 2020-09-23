@@ -94,6 +94,13 @@ public class Lexer {
             if(Character.isAlphabetic(currentChar)) {
                 return id();
             }
+            if(currentChar.equals('\'')){
+                advance();
+                Character tokChar = currentChar;
+                advance();
+                advance();
+                return new Token(Type.CHAR, tokChar.toString());
+            }
             if (currentChar.equals('+')){
                 advance();
                 return new Token(Type.PLUS, "+");

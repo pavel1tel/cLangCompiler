@@ -1,4 +1,3 @@
-int main () {
-return 0xab + 5 * 0x5ca;
-return 95;
+char main () {
+return '9';
 }
