@@ -34,8 +34,17 @@ public class Interpreter {
         } else if (node instanceof NoOp) {
             visit_NoOp(node);
             return;
+        } else if (node instanceof MainBlock) {
+            visit_Main(node);
+            return;
         }
         throw new RuntimeException();
+    }
+
+    @SneakyThrows
+    private void visit_Main(AST node) {
+        sourceWriter.write("main()");
+        visit(node.getExpr());
     }
 
     @lombok.SneakyThrows

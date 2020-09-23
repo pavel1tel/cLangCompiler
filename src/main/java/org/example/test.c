@@ -1,3 +1,3 @@
-{
-return 7 + 3;
+main () {
+return 7 + 3 + 3;
 }

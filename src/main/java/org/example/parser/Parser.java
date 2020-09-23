@@ -16,6 +16,13 @@ public class Parser {
         this.currentToken = lexer.getNextToken();
     }
 
+    public AST mainFunction() {
+        eat(Type.MAIN);
+        eat(Type.LPARENT);
+        eat(Type.RPARENT);
+        return new MainBlock(compoundStatement());
+    }
+
     public AST compoundStatement() {
         eat(Type.LBRACER);
         List<AST> nodes = statementList();
@@ -112,6 +119,6 @@ public class Parser {
     }
 
     public AST parse() {
-        return compoundStatement();
+        return mainFunction();
     }
 }
