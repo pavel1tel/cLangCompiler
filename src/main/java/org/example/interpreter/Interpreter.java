@@ -1,82 +1,129 @@
 package org.example.interpreter;
 
-import org.example.TreePrinter;
+import lombok.SneakyThrows;
 import org.example.lexer.Type;
 import org.example.parser.*;
 
+import java.io.FileWriter;
+
 public class Interpreter {
+    private final FileWriter sourceWriter;
     private final Parser parser;
 
-    public Interpreter(Parser parser) {
+    public Interpreter(FileWriter sourceWriter, Parser parser) {
+        this.sourceWriter = sourceWriter;
         this.parser = parser;
     }
 
-    public int visit(AST node) {
+    public void visit(AST node) {
         if (node instanceof BinOp) {
-            return visit_BinOp(node);
+            visit_BinOp(node);
+            return;
         } else if (node instanceof Num) {
-            return visit_Num(node);
+            visit_Num(node);
+            return;
         } else if (node instanceof UnaryOp) {
-            return visit_UnaryOp(node);
+            visit_UnaryOp(node);
+            return;
         } else if (node instanceof Compound) {
-             return visit_Compound(node);
+            visit_Compound(node);
+            return;
         } else if (node instanceof ReturnOp) {
-            return visit_Return(node);
+            visit_Return(node);
+            return;
         } else if (node instanceof NoOp) {
-            return visit_NoOp(node);
+            visit_NoOp(node);
+            return;
         }
         throw new RuntimeException();
     }
 
-    public int visit_BinOp(AST node) {
+    @lombok.SneakyThrows
+    public void visit_BinOp(AST node) {
         if (node.getOp().getType().equals(Type.PLUS)) {
-            return visit(node.getLeft()) + visit(node.getRight());
+            sourceWriter.write("(");
+            visit(node.getLeft());
+            sourceWriter.write("+");
+            visit(node.getRight());
+            sourceWriter.write(")");
+            return;
         }
         if (node.getOp().getType().equals(Type.MINUS)) {
-            return visit(node.getLeft()) - visit(node.getRight());
+            sourceWriter.write("(");
+            visit(node.getLeft());
+            sourceWriter.write("-");
+            visit(node.getRight());
+            sourceWriter.write(")");
+            return;
         }
         if (node.getOp().getType().equals(Type.MUL)) {
-            return visit(node.getLeft()) * visit(node.getRight());
+            sourceWriter.write("(");
+            visit(node.getLeft());
+            sourceWriter.write("*");
+            visit(node.getRight());
+            sourceWriter.write(")");
+            return;
         }
         if (node.getOp().getType().equals(Type.DIV)) {
-            return visit(node.getLeft()) / visit(node.getRight());
+            sourceWriter.write("(");
+            visit(node.getLeft());
+            sourceWriter.write("/");
+            visit(node.getRight());
+            sourceWriter.write(")");
+            return;
         }
         throw new RuntimeException();
     }
 
-    public int visit_UnaryOp(AST node) {
+    @SneakyThrows
+    public void visit_UnaryOp(AST node) {
         Type op = node.getOp().getType();
         if (op.equals(Type.MINUS)){
-            return -visit(node.getExpr());
+            sourceWriter.write("(");
+            sourceWriter.write("-");
+            visit(node.getExpr());
+            sourceWriter.write(")");
+            return;
         }
         if (op.equals(Type.PLUS)){
-            return +visit(node.getExpr());
+            sourceWriter.write("(");
+            sourceWriter.write("+");
+            visit(node.getExpr());
+            sourceWriter.write(")");
+            return;
         }
         throw new RuntimeException();
     }
 
-    public int visit_Compound(AST node) {
+    @SneakyThrows
+    public void visit_Compound(AST node) {
+        sourceWriter.write("{");
         for (AST child : node.getChildren()){
-            return visit(child);
+            visit(child);
+            sourceWriter.write(";");
         }
-        throw new RuntimeException();
+        sourceWriter.write("}");
     }
 
-    public int visit_Return(AST node) {
-        return visit(node.getExpr());
+    @SneakyThrows
+    public void visit_Return(AST node) {
+        sourceWriter.write("return ");
+        visit(node.getExpr());
     }
 
-    public int visit_Num(AST node) {
-        return Integer.parseInt(node.getValue());
+    @SneakyThrows
+    public void visit_Num(AST node) {
+        sourceWriter.write(node.getValue());
     }
 
-    public int visit_NoOp(AST node) {
-        return 0;
+    public void visit_NoOp(AST node) {
     }
 
-    public int interpreter() {
+    @SneakyThrows
+    public void interpreter() {
         AST tree = parser.parse();
         //TreePrinter.printAST(tree);
-        return visit(tree);
+        visit(tree);
+        sourceWriter.close();
     }
 }
