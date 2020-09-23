@@ -12,6 +12,7 @@ public abstract class AST {
     private Token value;
     private AST expr;
     private List<AST> children;
+    private AST valueType;
 
     public abstract AST getLeft();
     public abstract AST getRight();
@@ -24,6 +25,10 @@ public abstract class AST {
     }
 
     public List<AST> getChildren() {
+        return null;
+    }
+
+    public AST getValueType(){
         return null;
     }
 }

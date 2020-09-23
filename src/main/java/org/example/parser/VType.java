@@ -2,15 +2,12 @@ package org.example.parser;
 
 import org.example.lexer.Token;
 
-public class Num extends AST {
-    private final Token token;
-    private final String value;
-    private final AST valueType;
+public class VType extends AST{
 
-    public Num(Token token, AST valueType) {
+    private final Token token;
+
+    public VType(Token token) {
         this.token = token;
-        this.value = token.getValue();
-        this.valueType = valueType;
     }
 
     @Override
@@ -35,11 +32,6 @@ public class Num extends AST {
 
     @Override
     public String getValue() {
-        return value;
-    }
-
-    @Override
-    public AST getValueType() {
-        return valueType;
+        return null;
     }
 }

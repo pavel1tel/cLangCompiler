@@ -76,9 +76,13 @@ public class Parser {
             eat(Type.MINUS);
             return new UnaryOp(token, factor());
         }
-        if (token.getType().equals(Type.INTEGER)) {
-            eat(Type.INTEGER);
-            return new Num(token);
+        if (token.getType().equals(Type.DECIMAL)) {
+            eat(Type.DECIMAL);
+            return new Num(token, new VType(new Token(Type.DECIMAL, "DECIMAL")));
+        }
+        if (token.getType().equals(Type.HEX)) {
+            eat(Type.HEX);
+            return new Num(token, new VType(new Token(Type.HEX, "HEX")));
         } else if (token.getType().equals(Type.LPARENT)) {
             eat(Type.LPARENT);
             AST node = expr();

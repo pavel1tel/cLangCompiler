@@ -54,14 +54,33 @@ public class Lexer {
         return result.toString();
     }
 
+    public String parseHex() {
+        StringBuilder result = new StringBuilder();
+        result.append("0x");
+        while (currentChar != null && Character.isDigit(currentChar)){
+            result.append(currentChar);
+            advance();
+        }
+        return result.toString();
+    }
+
     public Token getNextToken() {
         while (currentChar != null) {
             if (Character.isWhitespace(currentChar)) {
                 skipWhiteSpaces();
                 continue;
             }
-            if (Character.isDigit(currentChar)) {
-                return new Token(Type.INTEGER, parseInteger());
+            if (Character.isDigit(currentChar) && currentChar != '0') {
+                System.out.println(true);
+                return new Token(Type.DECIMAL, parseInteger());
+            }
+
+            if (Character.isDigit(currentChar) && currentChar == '0'){
+                if(peek() == 'x') {
+                    advance();
+                    advance();
+                    return new Token(Type.HEX, parseHex());
+                }
             }
             if(Character.isAlphabetic(currentChar)) {
                 return id();
