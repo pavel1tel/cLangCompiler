@@ -1,1 +1,2 @@
-char main(){return '9';}
+mov ah, 'c'
+mov b, ah

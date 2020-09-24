@@ -10,6 +10,7 @@ public class Interpreter {
     private final FileWriter sourceWriter;
     private final Parser parser;
     private final Stack<AST> callStack;
+    private String returnRegister = "eax";
 
     public Interpreter(FileWriter sourceWriter, Parser parser) {
         this.sourceWriter = sourceWriter;
@@ -48,49 +49,55 @@ public class Interpreter {
 
     @SneakyThrows
     private void visit_Char(AST node) {
-        sourceWriter.write("'" + node.getValue() + "'");
+        sourceWriter.write("mov " + returnRegister + ", '"+ node.getValue() + "'");
+        sourceWriter.write(System.getProperty( "line.separator" ));
     }
 
     @SneakyThrows
     private void visit_Main(AST node) {
         callStack.push(node);
-        sourceWriter.write(node.getValueType().getToken().getValue().toLowerCase()+ " ");
-        sourceWriter.write("main()");
+        //sourceWriter.write(node.getValueType().getToken().getValue().toLowerCase()+ " ");
+        if (node.getValueType().getToken().getType().equals(Type.INT)) {
+            returnRegister = "eax";
+        } else if (node.getValueType().getToken().getType().equals(Type.CHAR)){
+            returnRegister = "ah";
+        }
+        //sourceWriter.write("main()");
         visit(node.getExpr());
     }
 
     @lombok.SneakyThrows
     public void visit_BinOp(AST node) {
         if (node.getOp().getType().equals(Type.PLUS)) {
-            sourceWriter.write("(");
+            //sourceWriter.write("(");
             visit(node.getLeft());
-            sourceWriter.write("+");
+            //sourceWriter.write("+");
             visit(node.getRight());
-            sourceWriter.write(")");
+            //sourceWriter.write(")");
             return;
         }
         if (node.getOp().getType().equals(Type.MINUS)) {
-            sourceWriter.write("(");
+            //sourceWriter.write("(");
             visit(node.getLeft());
-            sourceWriter.write("-");
+            //sourceWriter.write("-");
             visit(node.getRight());
-            sourceWriter.write(")");
+            //sourceWriter.write(")");
             return;
         }
         if (node.getOp().getType().equals(Type.MUL)) {
-            sourceWriter.write("(");
+            //sourceWriter.write("(");
             visit(node.getLeft());
-            sourceWriter.write("*");
+            //sourceWriter.write("*");
             visit(node.getRight());
-            sourceWriter.write(")");
+            //sourceWriter.write(")");
             return;
         }
         if (node.getOp().getType().equals(Type.DIV)) {
-            sourceWriter.write("(");
+            //sourceWriter.write("(");
             visit(node.getLeft());
-            sourceWriter.write("/");
+            //sourceWriter.write("/");
             visit(node.getRight());
-            sourceWriter.write(")");
+            //sourceWriter.write(")");
             return;
         }
         throw new RuntimeException();
@@ -100,17 +107,17 @@ public class Interpreter {
     public void visit_UnaryOp(AST node) {
         Type op = node.getOp().getType();
         if (op.equals(Type.MINUS)) {
-            sourceWriter.write("(");
-            sourceWriter.write("-");
+            //sourceWriter.write("(");
+            //sourceWriter.write("-");
             visit(node.getExpr());
-            sourceWriter.write(")");
+            //sourceWriter.write(")");
             return;
         }
         if (op.equals(Type.PLUS)) {
-            sourceWriter.write("(");
-            sourceWriter.write("+");
+            //sourceWriter.write("(");
+            //sourceWriter.write("+");
             visit(node.getExpr());
-            sourceWriter.write(")");
+            //sourceWriter.write(")");
             return;
         }
         throw new RuntimeException();
@@ -118,19 +125,19 @@ public class Interpreter {
 
     @SneakyThrows
     public void visit_Compound(AST node) {
-        sourceWriter.write("{");
+        //sourceWriter.write("{");
         for (AST child : node.getChildren()) {
             if(child instanceof ReturnOp){
                 visit(child);
-                sourceWriter.write(";");
-                sourceWriter.write("}");
+          //      sourceWriter.write(";");
+            //    sourceWriter.write("}");
                 return;
             } else {
                 visit(child);
             }
-            sourceWriter.write(";");
+            //sourceWriter.write(";");
         }
-        sourceWriter.write("}");
+        //sourceWriter.write("}");
     }
 
     @SneakyThrows
@@ -148,14 +155,15 @@ public class Interpreter {
         )) {
             throw new RuntimeException("wrong return type");
         }
-            sourceWriter.write("return ");
         visit(node.getExpr());
+        sourceWriter.write("mov b, " + returnRegister);
         callStack.pop();
     }
 
     @SneakyThrows
     public void visit_Num(AST node) {
-        sourceWriter.write(node.getValue());
+        sourceWriter.write("mov " + returnRegister + ", "+ node.getValue());
+        sourceWriter.write(System.getProperty( "line.separator" ));
     }
 
     public void visit_NoOp(AST node) {
