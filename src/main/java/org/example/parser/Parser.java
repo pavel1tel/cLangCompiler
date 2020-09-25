@@ -10,6 +10,8 @@ import java.util.List;
 public class Parser {
     private final Lexer lexer;
     private Token currentToken;
+    private int pos;
+    private int line;
 
     public Parser(Lexer lexer) {
         this.lexer = lexer;
@@ -73,9 +75,11 @@ public class Parser {
 
     private void eat(Type type) {
         if (currentToken.getType().equals(type)) {
+            pos = lexer.getPos() + 1;
+            line = lexer.getLine();
             currentToken = lexer.getNextToken();
         } else {
-            throw new RuntimeException();
+            throw new RuntimeException("unexpected token in line " + line + " position " + pos + "\n Expected :" + type);
         }
     }
 
@@ -107,7 +111,7 @@ public class Parser {
             eat(Type.RPARENT);
             return node;
         }
-        throw new RuntimeException();
+        throw new RuntimeException("expected value on line" + lexer.getLine() + " at "+ pos);
     }
 
     private AST term() {

@@ -2,11 +2,15 @@ package org.example.lexer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class Lexer {
     private String text;
     private Integer pos;
+    private Integer prevPos;
     private Character currentChar;
+    private int line = 1;
+    private int prevLine = 0;
 
     public Lexer(String text) {
         this.text = text;
@@ -30,10 +34,16 @@ public class Lexer {
             result.append(currentChar.toString());
             advance();
         }
-        return new Token(Type.valueOf(result.toString().toUpperCase()), result.toString());
+        try {
+            return new Token(Type.valueOf(result.toString().toUpperCase()), result.toString());
+
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException(result.toString() + " is not a language constant\n at line " + line + " position " + pos);
+        }
     }
 
     public void advance() {
+        prevPos = pos;
         pos++;
         if(pos >(text.length()-1)) {
             currentChar = null;
@@ -43,6 +53,19 @@ public class Lexer {
     }
 
     public void skipWhiteSpaces() {
+        if (currentChar == '\n') {
+            if (text.split("\n", 2).length < 2){
+                advance();
+                return;
+            }
+            prevPos = pos;
+            pos = -1;
+            text = text.split("\n", 2)[1];
+            prevLine = line;
+            line++;
+            advance();
+            return;
+        }
         while (currentChar != null && Character.isWhitespace(currentChar)) {
             advance();
         }
@@ -67,7 +90,7 @@ public class Lexer {
         hexCHars.add('d');
         hexCHars.add('e');
         hexCHars.add('f');
-        while (currentChar != null && (Character.isDigit(currentChar) ||  hexCHars.contains(currentChar))){
+        while (currentChar != null && (Character.isDigit(currentChar) ||  hexCHars.contains(currentChar.toString().toLowerCase().charAt(0)))){
             result.append(currentChar);
             advance();
         }
@@ -140,5 +163,13 @@ public class Lexer {
             throw new RuntimeException();
         }
         return new Token(Type.EOF, null);
+    }
+
+    public int getLine() {
+        return line;
+    }
+
+    public Integer getPos() {
+        return pos;
     }
 }

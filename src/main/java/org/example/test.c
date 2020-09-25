@@ -1,6 +1,0 @@
-char main(){
-return 'c';
-}
-
-
-
