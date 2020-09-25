@@ -6,12 +6,14 @@ import org.example.lexer.Type;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class Parser {
     private final Lexer lexer;
     private Token currentToken;
     private int pos;
     private int line;
+    Logger logger = Logger.getLogger("logger");
 
     public Parser(Lexer lexer) {
         this.lexer = lexer;
@@ -79,6 +81,7 @@ public class Parser {
             line = lexer.getLine();
             currentToken = lexer.getNextToken();
         } else {
+            logger.warning("unexpected token in line " + line + " position " + pos + "\n Expected :" + type);
             throw new RuntimeException("unexpected token in line " + line + " position " + pos + "\n Expected :" + type);
         }
     }
@@ -111,6 +114,7 @@ public class Parser {
             eat(Type.RPARENT);
             return node;
         }
+        logger.warning("expected value on line" + lexer.getLine() + " at "+ pos);
         throw new RuntimeException("expected value on line" + lexer.getLine() + " at "+ pos);
     }
 

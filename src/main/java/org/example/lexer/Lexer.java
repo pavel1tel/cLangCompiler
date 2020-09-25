@@ -3,6 +3,7 @@ package org.example.lexer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public class Lexer {
     private String text;
@@ -11,6 +12,7 @@ public class Lexer {
     private Character currentChar;
     private int line = 1;
     private int prevLine = 0;
+    Logger logger = Logger.getLogger("logger");
 
     public Lexer(String text) {
         this.text = text;
@@ -38,6 +40,7 @@ public class Lexer {
             return new Token(Type.valueOf(result.toString().toUpperCase()), result.toString());
 
         } catch (IllegalArgumentException ex) {
+            logger.warning(result.toString() + " is not a language constant\n at line " + line + " position " + pos);
             throw new RuntimeException(result.toString() + " is not a language constant\n at line " + line + " position " + pos);
         }
     }

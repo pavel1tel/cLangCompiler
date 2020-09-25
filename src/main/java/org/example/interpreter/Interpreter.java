@@ -5,12 +5,14 @@ import org.example.lexer.Type;
 import org.example.parser.*;
 
 import java.io.FileWriter;
+import java.util.logging.Logger;
 
 public class Interpreter {
     private final FileWriter sourceWriter;
     private final Parser parser;
     private final Stack<AST> callStack;
     private String returnRegister = "eax";
+    Logger logger = Logger.getLogger("logger");
 
     public Interpreter(FileWriter sourceWriter, Parser parser) {
         this.sourceWriter = sourceWriter;
@@ -147,12 +149,14 @@ public class Interpreter {
                 node.getValueType().getToken().getType().equals(Type.DECIMAL) ||
                         node.getValueType().getToken().getType().equals(Type.HEX)
         )) {
+            logger.warning("wrong return type");
             throw new RuntimeException("wrong return type");
         }
         if (func.getValueType().getToken().getType().equals(Type.CHAR) && (
                 node.getValueType().getToken().getType().equals(Type.DECIMAL) ||
                         node.getValueType().getToken().getType().equals(Type.HEX)
         )) {
+            logger.warning("wrong return type");
             throw new RuntimeException("wrong return type");
         }
         visit(node.getExpr());
