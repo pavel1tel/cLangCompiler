@@ -51,7 +51,8 @@ public class Interpreter {
 
     @SneakyThrows
     private void visit_Char(AST node) {
-        sourceWriter.write("mov " + returnRegister + ", '"+ node.getValue() + "'");
+        int value = node.getValue().charAt(0);
+        sourceWriter.write("mov " + returnRegister + ", "+ value);
         sourceWriter.write(System.getProperty( "line.separator" ));
     }
 
@@ -147,7 +148,8 @@ public class Interpreter {
         AST func = callStack.peek();
         if (func.getValueType().getToken().getType().equals(Type.INT) && !(
                 node.getValueType().getToken().getType().equals(Type.DECIMAL) ||
-                        node.getValueType().getToken().getType().equals(Type.HEX)
+                        node.getValueType().getToken().getType().equals(Type.HEX) ||
+                        node.getValueType().getToken().getType().equals(Type.CHAR)
         )) {
             logger.warning("wrong return type");
             throw new RuntimeException("wrong return type");

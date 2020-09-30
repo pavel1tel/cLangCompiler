@@ -163,7 +163,8 @@ public class Lexer {
                 advance();
                 return new Token(Type.RBRACER, "}");
             }
-            throw new RuntimeException();
+            logger.warning("Unrecognized token at line " + line + " position " + pos);
+            throw new RuntimeException("Unrecognized token at line " + line + " position " + pos);
         }
         return new Token(Type.EOF, null);
     }

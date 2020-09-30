@@ -1,22 +1,20 @@
-Sep 25, 2020 12:03:07 PM org.example.App main
-INFO: Token{type=CHAR, value='char'}
-Sep 25, 2020 12:03:07 PM org.example.App main
+Sep 25, 2020 1:22:42 PM org.example.App main
+INFO: Token{type=INT, value='int'}
+Sep 25, 2020 1:22:42 PM org.example.App main
 INFO: Token{type=MAIN, value='main'}
-Sep 25, 2020 12:03:07 PM org.example.App main
+Sep 25, 2020 1:22:42 PM org.example.App main
 INFO: Token{type=LPARENT, value='('}
-Sep 25, 2020 12:03:07 PM org.example.App main
+Sep 25, 2020 1:22:42 PM org.example.App main
 INFO: Token{type=RPARENT, value=')'}
-Sep 25, 2020 12:03:07 PM org.example.App main
+Sep 25, 2020 1:22:42 PM org.example.App main
 INFO: Token{type=LBRACER, value='{'}
-Sep 25, 2020 12:03:07 PM org.example.App main
+Sep 25, 2020 1:22:42 PM org.example.App main
 INFO: Token{type=RETURN, value='return'}
-Sep 25, 2020 12:03:07 PM org.example.App main
-INFO: Token{type=HEX, value='0xA4ABC'}
-Sep 25, 2020 12:03:07 PM org.example.App main
+Sep 25, 2020 1:22:42 PM org.example.App main
+INFO: Token{type=CHAR, value='b'}
+Sep 25, 2020 1:22:42 PM org.example.App main
 INFO: Token{type=SEMI, value=';'}
-Sep 25, 2020 12:03:07 PM org.example.App main
+Sep 25, 2020 1:22:42 PM org.example.App main
 INFO: Token{type=RBRACER, value='}'}
-Sep 25, 2020 12:03:07 PM org.example.App main
+Sep 25, 2020 1:22:42 PM org.example.App main
 INFO: Token{type=EOF, value='null'}
-Sep 25, 2020 12:03:07 PM org.example.interpreter.Interpreter visit_Return
-WARNING: wrong return type

@@ -35,7 +35,8 @@ public class Parser {
         } else if (currentToken.getType().equals(Type.CHAR)){
             eat(Type.CHAR);
         } else {
-            throw new RuntimeException();
+            logger.warning("Expected return type int or char at line " + line + " position " + pos);
+            throw new RuntimeException("Expected return type int or char at line " + line + "position " + pos);
         }
         return new VType(token);
     }
