@@ -131,6 +131,10 @@ public class Lexer {
                 advance();
                 return new Token(Type.PLUS, "+");
             }
+            if (currentChar.equals('~')){
+                advance();
+                return new Token(Type.TILDE, "~");
+            }
             if (currentChar.equals('-')){
                 advance();
                 return new Token(Type.MINUS, "-");

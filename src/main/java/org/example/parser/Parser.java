@@ -98,6 +98,10 @@ public class Parser {
             eat(Type.MINUS);
             return new UnaryOp(token, factor());
         }
+        if (token.getType().equals(Type.TILDE)) {
+            eat(Type.TILDE);
+            return new UnaryOp(token, factor());
+        }
         if (token.getType().equals(Type.DECIMAL)) {
             eat(Type.DECIMAL);
             return new Num(token, new VType(new Token(Type.DECIMAL, "DECIMAL")));
@@ -116,7 +120,7 @@ public class Parser {
             return node;
         }
         logger.warning("expected value on line" + lexer.getLine() + " at "+ pos);
-        throw new RuntimeException("expected value on line" + lexer.getLine() + " at "+ pos);
+        throw new RuntimeException("expected value on line " + lexer.getLine() + " at "+ pos);
     }
 
     private AST term() {

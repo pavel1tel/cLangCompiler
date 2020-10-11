@@ -12,6 +12,7 @@ public class Interpreter {
     private final Parser parser;
     private final Stack<AST> callStack;
     private String returnRegister = "eax";
+    private boolean first = true;
     Logger logger = Logger.getLogger("logger");
 
     public Interpreter(FileWriter sourceWriter, Parser parser) {
@@ -80,11 +81,16 @@ public class Interpreter {
             return;
         }
         if (node.getOp().getType().equals(Type.MINUS)) {
-            //sourceWriter.write("(");
             visit(node.getLeft());
-            //sourceWriter.write("-");
+            sourceWriter.write("push eax");
+            sourceWriter.write(System.getProperty( "line.separator" ));
             visit(node.getRight());
-            //sourceWriter.write(")");
+            sourceWriter.write("pop ecx");
+            sourceWriter.write(System.getProperty( "line.separator" ));
+            sourceWriter.write("sub ecx, eax");
+            sourceWriter.write(System.getProperty( "line.separator" ));
+            sourceWriter.write("mov eax, ecx");
+            sourceWriter.write(System.getProperty( "line.separator" ));
             return;
         }
         if (node.getOp().getType().equals(Type.MUL)) {
@@ -123,6 +129,12 @@ public class Interpreter {
             //sourceWriter.write(")");
             return;
         }
+        if (op.equals(Type.TILDE)) {
+            visit(node.getExpr());
+            sourceWriter.write("not eax");
+            sourceWriter.write(System.getProperty( "line.separator" ));
+            return;
+        }
         throw new RuntimeException();
     }
 
@@ -149,7 +161,8 @@ public class Interpreter {
         if (func.getValueType().getToken().getType().equals(Type.INT) && !(
                 node.getValueType().getToken().getType().equals(Type.DECIMAL) ||
                         node.getValueType().getToken().getType().equals(Type.HEX) ||
-                        node.getValueType().getToken().getType().equals(Type.CHAR)
+                        node.getValueType().getToken().getType().equals(Type.CHAR) ||
+                        node.getValueType().getToken().getType().equals(Type.TILDE)
         )) {
             logger.warning("wrong return type");
             throw new RuntimeException("wrong return type");
@@ -168,6 +181,12 @@ public class Interpreter {
 
     @SneakyThrows
     public void visit_Num(AST node) {
+//        if (first) {
+//            sourceWriter.write("mov " + returnRegister + ", "+ node.getValue());
+//            first = false;
+//        } else {
+//            sourceWriter.write(node.getValue());
+//        }
         sourceWriter.write("mov " + returnRegister + ", "+ node.getValue());
         sourceWriter.write(System.getProperty( "line.separator" ));
     }
