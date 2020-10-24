@@ -7,18 +7,18 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
-public class CallStack implements Stack<AST>{
-    Deque<AST> stack = new LinkedList<>();
+public class CallStack<T> implements Stack<T>{
+    Deque<T> stack = new LinkedList<>();
 
-    public void push(AST func) {
+    public void push(T func) {
         stack.addLast(func);
     }
 
-    public AST pop() {
+    public T pop() {
         return stack.pollLast();
     }
 
-    public AST peek() {
+    public T peek() {
         return stack.peekLast();
     }
 }

@@ -37,12 +37,13 @@ public class Lexer {
             advance();
         }
         try {
-            return new Token(Type.valueOf(result.toString().toUpperCase()), result.toString());
-
+            Type type = Type.valueOf(result.toString().toUpperCase());
+            return new Token(type, result.toString());
         } catch (IllegalArgumentException ex) {
-            logger.warning(result.toString() + " is not a language constant\n at line " + line + " position " + pos);
-            throw new RuntimeException(result.toString() + " is not a language constant\n at line " + line + " position " + pos);
+            return new Token(Type.ID, result.toString());
         }
+//        logger.warning(result.toString() + " is not a language constant\n at line " + line + " position " + pos);
+//        throw new RuntimeException(result.toString() + " is not a language constant\n at line " + line + " position " + pos);
     }
 
     public void advance() {
@@ -126,6 +127,14 @@ public class Lexer {
                 advance();
                 advance();
                 return new Token(Type.CHAR, tokChar.toString());
+            }
+            if(currentChar.equals('=')){
+                advance();
+                return new Token(Type.ASSIGN, "=");
+            }
+            if(currentChar.equals('|')){
+                advance();
+                return new Token(Type.OR, "|");
             }
             if (currentChar.equals('+')){
                 advance();

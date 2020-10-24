@@ -30,9 +30,9 @@ public class Parser {
 
     public AST typeSpec() {
         Token token = currentToken;
-        if(currentToken.getType().equals(Type.INT)){
+        if (currentToken.getType().equals(Type.INT)) {
             eat(Type.INT);
-        } else if (currentToken.getType().equals(Type.CHAR)){
+        } else if (currentToken.getType().equals(Type.CHAR)) {
             eat(Type.CHAR);
         } else {
             logger.warning("Expected return type int or char at line " + line + " position " + pos);
@@ -64,6 +64,12 @@ public class Parser {
             return compoundStatement();
         } else if (currentToken.getType().equals(Type.RETURN)) {
             return returnStatement();
+        } else if (currentToken.getType().equals(Type.INT)) {
+            return assignmentStatement();
+        } else if (currentToken.getType().equals(Type.CHAR)) {
+                return assignmentStatement();
+        } else if (currentToken.getType().equals(Type.ID)) {
+            return reAssignStatment();
         } else {
             return new NoOp();
         }
@@ -72,7 +78,42 @@ public class Parser {
     public AST returnStatement() {
         eat(Type.RETURN);
         VType vType = new VType(currentToken);
-        return new ReturnOp(expr(), vType);
+        return new ReturnOp(logic(), vType);
+    }
+
+    public AST assignmentStatement() {
+        VType type;
+        if (currentToken.getType().equals(Type.INT)){
+            type = new VType(new Token(Type.DECIMAL, "DECIMAL"));
+            eat(Type.INT);
+        } else if (currentToken.getType().equals(Type.CHAR)){
+            type = new VType(new Token(Type.CHAR, "CHAR"));
+            eat(Type.CHAR);
+        } else {
+            type = null;
+        }
+        AST left = variable();
+        Token token = currentToken;
+        if (currentToken.getType().equals(Type.SEMI)) {
+            return new Assing(null, token, left, type);
+        }
+        eat(Type.ASSIGN);
+        AST right = logic();
+        return new Assing(right, token, left, type);
+    }
+
+    public AST reAssignStatment() {
+        AST left = variable();
+        eat(Type.ASSIGN);
+        Token token = currentToken;
+        AST right = logic();
+        return new reAssign(right, token, left);
+    }
+
+    public AST variable() {
+        AST node = new Var(currentToken);
+        eat(Type.ID);
+        return node;
     }
 
 
@@ -106,7 +147,7 @@ public class Parser {
             eat(Type.DECIMAL);
             return new Num(token, new VType(new Token(Type.DECIMAL, "DECIMAL")));
         }
-        if (token.getType().equals(Type.CHAR)){
+        if (token.getType().equals(Type.CHAR)) {
             eat(Type.CHAR);
             return new Char(token, new VType(new Token(Type.CHAR, "CHAR")));
         }
@@ -118,9 +159,26 @@ public class Parser {
             AST node = expr();
             eat(Type.RPARENT);
             return node;
+        } else {
+            try {
+                return variable();
+            } catch (Exception exception) {
+                logger.warning("expected value on line" + lexer.getLine() + " at " + pos);
+                throw new RuntimeException("expected value on line " + lexer.getLine() + " at " + pos);
+            }
         }
-        logger.warning("expected value on line" + lexer.getLine() + " at "+ pos);
-        throw new RuntimeException("expected value on line " + lexer.getLine() + " at "+ pos);
+    }
+
+    private AST logic() {
+        AST node = expr();
+        while (currentToken.getType().equals(Type.OR)) {
+            Token token = currentToken;
+            if (token.getType().equals(Type.OR)) {
+                eat(Type.OR);
+            }
+            node = new BinOp(node, expr(), token);
+        }
+        return node;
     }
 
     private AST term() {

@@ -5,6 +5,7 @@ import org.example.lexer.Type;
 import org.example.parser.*;
 
 import java.io.FileWriter;
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 public class Interpreter {
@@ -14,6 +15,8 @@ public class Interpreter {
     private String returnRegister = "eax";
     private boolean first = true;
     Logger logger = Logger.getLogger("logger");
+    HashMap<String, Integer> varStack = new HashMap();
+    Integer stackIndex = -4;
 
     public Interpreter(FileWriter sourceWriter, Parser parser) {
         this.sourceWriter = sourceWriter;
@@ -46,6 +49,15 @@ public class Interpreter {
         } else if (node instanceof Char) {
             visit_Char(node);
             return;
+        } else if (node instanceof Assing) {
+            visit_Assign(node);
+            return;
+        } else if (node instanceof Var) {
+            visit_Var(node);
+            return;
+        } else if (node instanceof reAssign) {
+            visit_reAssign(node);
+            return;
         }
         throw new RuntimeException();
     }
@@ -53,18 +65,22 @@ public class Interpreter {
     @SneakyThrows
     private void visit_Char(AST node) {
         int value = node.getValue().charAt(0);
-        sourceWriter.write("mov " + returnRegister + ", "+ value);
-        sourceWriter.write(System.getProperty( "line.separator" ));
+        sourceWriter.write("mov " + returnRegister + ", " + value);
+        sourceWriter.write(System.getProperty("line.separator"));
     }
 
     @SneakyThrows
     private void visit_Main(AST node) {
+        sourceWriter.write("push ebp");
+        sourceWriter.write(System.getProperty("line.separator"));
+        sourceWriter.write("mov ebp, esp");
+        sourceWriter.write(System.getProperty("line.separator"));
         callStack.push(node);
         //sourceWriter.write(node.getValueType().getToken().getValue().toLowerCase()+ " ");
         if (node.getValueType().getToken().getType().equals(Type.INT)) {
             returnRegister = "eax";
-        } else if (node.getValueType().getToken().getType().equals(Type.CHAR)){
-            returnRegister = "ah";
+        } else if (node.getValueType().getToken().getType().equals(Type.CHAR)) {
+            returnRegister = "al";
         }
         //sourceWriter.write("main()");
         visit(node.getExpr());
@@ -72,41 +88,43 @@ public class Interpreter {
 
     @lombok.SneakyThrows
     public void visit_BinOp(AST node) {
-        if (node.getOp().getType().equals(Type.PLUS)) {
-            //sourceWriter.write("(");
-            visit(node.getLeft());
-            //sourceWriter.write("+");
-            visit(node.getRight());
-            //sourceWriter.write(")");
-            return;
-        }
         if (node.getOp().getType().equals(Type.MINUS)) {
             visit(node.getLeft());
             sourceWriter.write("push eax");
-            sourceWriter.write(System.getProperty( "line.separator" ));
+            sourceWriter.write(System.getProperty("line.separator"));
             visit(node.getRight());
             sourceWriter.write("pop ecx");
-            sourceWriter.write(System.getProperty( "line.separator" ));
+            sourceWriter.write(System.getProperty("line.separator"));
             sourceWriter.write("sub ecx, eax");
-            sourceWriter.write(System.getProperty( "line.separator" ));
+            sourceWriter.write(System.getProperty("line.separator"));
+            sourceWriter.write("mov " + returnRegister + ", ecx");
+            sourceWriter.write(System.getProperty("line.separator"));
+            return;
+        }
+        if (node.getOp().getType().equals(Type.PLUS)) {
+            visit(node.getLeft());
+            sourceWriter.write("push eax");
+            sourceWriter.write(System.getProperty("line.separator"));
+            visit(node.getRight());
+            sourceWriter.write("pop ecx");
+            sourceWriter.write(System.getProperty("line.separator"));
+            sourceWriter.write("add ecx, eax");
+            sourceWriter.write(System.getProperty("line.separator"));
             sourceWriter.write("mov eax, ecx");
-            sourceWriter.write(System.getProperty( "line.separator" ));
+            sourceWriter.write(System.getProperty("line.separator"));
             return;
         }
-        if (node.getOp().getType().equals(Type.MUL)) {
-            //sourceWriter.write("(");
+        if (node.getOp().getType().equals(Type.OR)) {
             visit(node.getLeft());
-            //sourceWriter.write("*");
+            sourceWriter.write("push eax");
+            sourceWriter.write(System.getProperty("line.separator"));
             visit(node.getRight());
-            //sourceWriter.write(")");
-            return;
-        }
-        if (node.getOp().getType().equals(Type.DIV)) {
-            //sourceWriter.write("(");
-            visit(node.getLeft());
-            //sourceWriter.write("/");
-            visit(node.getRight());
-            //sourceWriter.write(")");
+            sourceWriter.write("pop ecx");
+            sourceWriter.write(System.getProperty("line.separator"));
+            sourceWriter.write("or ecx, eax");
+            sourceWriter.write(System.getProperty("line.separator"));
+            sourceWriter.write("mov eax, ecx");
+            sourceWriter.write(System.getProperty("line.separator"));
             return;
         }
         throw new RuntimeException();
@@ -115,24 +133,10 @@ public class Interpreter {
     @SneakyThrows
     public void visit_UnaryOp(AST node) {
         Type op = node.getOp().getType();
-        if (op.equals(Type.MINUS)) {
-            //sourceWriter.write("(");
-            //sourceWriter.write("-");
-            visit(node.getExpr());
-            //sourceWriter.write(")");
-            return;
-        }
-        if (op.equals(Type.PLUS)) {
-            //sourceWriter.write("(");
-            //sourceWriter.write("+");
-            visit(node.getExpr());
-            //sourceWriter.write(")");
-            return;
-        }
         if (op.equals(Type.TILDE)) {
             visit(node.getExpr());
             sourceWriter.write("not eax");
-            sourceWriter.write(System.getProperty( "line.separator" ));
+            sourceWriter.write(System.getProperty("line.separator"));
             return;
         }
         throw new RuntimeException();
@@ -140,19 +144,60 @@ public class Interpreter {
 
     @SneakyThrows
     public void visit_Compound(AST node) {
-        //sourceWriter.write("{");
         for (AST child : node.getChildren()) {
-            if(child instanceof ReturnOp){
+            if (child instanceof ReturnOp) {
                 visit(child);
-          //      sourceWriter.write(";");
-            //    sourceWriter.write("}");
                 return;
             } else {
                 visit(child);
             }
-            //sourceWriter.write(";");
         }
-        //sourceWriter.write("}");
+    }
+
+    @SneakyThrows
+    public void visit_Assign(AST node) {
+        String varName = node.getLeft().getValue();
+        if (varStack.containsKey(varName) && (node.getRight() == null)) {
+            logger.warning(varName + " is already declared");
+            throw new RuntimeException(varName + " is already declared");
+        }
+        if (node.getRight() == null) {
+            varStack.put(varName, stackIndex);
+            //stackIndex = stackIndex - 4;
+        } else if (!varStack.containsKey(varName)) {
+            visit(node.getRight());
+            sourceWriter.write("push eax");
+            sourceWriter.write(System.getProperty("line.separator"));
+            varStack.put(varName, stackIndex);
+            stackIndex = stackIndex - 4;
+        }
+    }
+
+    @SneakyThrows
+    public void visit_reAssign(AST node) {
+        String varName = node.getLeft().getValue();
+        if (!varStack.containsKey(varName)) {
+            logger.warning(varName + " is not declared");
+            throw new RuntimeException(varName + " is not declared");
+        }
+        visit(node.getRight());
+        sourceWriter.write("push eax");
+        sourceWriter.write(System.getProperty("line.separator"));
+        varStack.replace(varName, stackIndex);
+        stackIndex = stackIndex - 4;
+    }
+
+    @SneakyThrows
+    public void visit_Var(AST node) {
+        int varOffset;
+        try {
+             varOffset = varStack.get(node.getValue());
+        } catch (Exception ex) {
+            logger.warning(node.getToken().getValue() + " is not declared");
+            throw new RuntimeException(node.getToken().getValue() + " is not declared");
+        }
+        sourceWriter.write("mov eax" + ", [" + varOffset + " + ebp]");
+        sourceWriter.write(System.getProperty("line.separator"));
     }
 
     @SneakyThrows
@@ -162,7 +207,8 @@ public class Interpreter {
                 node.getValueType().getToken().getType().equals(Type.DECIMAL) ||
                         node.getValueType().getToken().getType().equals(Type.HEX) ||
                         node.getValueType().getToken().getType().equals(Type.CHAR) ||
-                        node.getValueType().getToken().getType().equals(Type.TILDE)
+                        node.getValueType().getToken().getType().equals(Type.TILDE) ||
+                        node.getValueType().getToken().getType().equals(Type.ID)
         )) {
             logger.warning("wrong return type");
             throw new RuntimeException("wrong return type");
@@ -175,20 +221,19 @@ public class Interpreter {
             throw new RuntimeException("wrong return type");
         }
         visit(node.getExpr());
+        sourceWriter.write("mov esp, ebp");
+        sourceWriter.write(System.getProperty("line.separator"));
+        sourceWriter.write("pop ebp");
+        sourceWriter.write(System.getProperty("line.separator"));
         sourceWriter.write("mov b, " + returnRegister);
         callStack.pop();
     }
 
     @SneakyThrows
     public void visit_Num(AST node) {
-//        if (first) {
-//            sourceWriter.write("mov " + returnRegister + ", "+ node.getValue());
-//            first = false;
-//        } else {
-//            sourceWriter.write(node.getValue());
-//        }
-        sourceWriter.write("mov " + returnRegister + ", "+ node.getValue());
-        sourceWriter.write(System.getProperty( "line.separator" ));
+        sourceWriter.write("mov eax" + ", " + node.getValue());
+        sourceWriter.write(System.getProperty("line.separator"));
+
     }
 
     public void visit_NoOp(AST node) {
@@ -197,7 +242,6 @@ public class Interpreter {
     @SneakyThrows
     public void interpreter() {
         AST tree = parser.parse();
-        //TreePrinter.printAST(tree);
         visit(tree);
         sourceWriter.close();
     }
