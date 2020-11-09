@@ -5,8 +5,8 @@ import org.example.lexer.Token;
 import java.util.List;
 
 public abstract class AST {
-    private Token left;
-    private Token right;
+    private AST left;
+    private AST right;
     private Token token;
     private Token op;
     private Token value;

@@ -21,4 +21,9 @@ public class CallStack<T> implements Stack<T>{
     public T peek() {
         return stack.peekLast();
     }
+
+    @Override
+    public int size() {
+        return stack.size();
+    }
 }

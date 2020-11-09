@@ -5,7 +5,9 @@ import org.example.lexer.Type;
 import org.example.parser.*;
 
 import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class Interpreter {
@@ -14,8 +16,10 @@ public class Interpreter {
     private final Stack<AST> callStack;
     private String returnRegister = "eax";
     private boolean first = true;
+    int condIndex = 3;
     Logger logger = Logger.getLogger("logger");
-    HashMap<String, Integer> varStack = new HashMap();
+    int index = -1;
+    List<HashMap<String, Integer>> varStack = new ArrayList<>();
     Integer stackIndex = -4;
 
     public Interpreter(FileWriter sourceWriter, Parser parser) {
@@ -59,7 +63,29 @@ public class Interpreter {
             visit_reAssign(node);
             return;
         }
+        else if (node instanceof CondExp) {
+            visit_condExp(node);
+            return;
+        }
         throw new RuntimeException();
+    }
+
+    @SneakyThrows
+    private void visit_condExp(AST node) {
+        visit(node.getExpr());
+        sourceWriter.write("cmp eax, 0");
+        sourceWriter.write(System.getProperty("line.separator"));
+        sourceWriter.write("je   _e" + condIndex);
+        sourceWriter.write(System.getProperty("line.separator"));
+        visit(node.getLeft());
+        sourceWriter.write("jmp  _post_conditional" + condIndex);
+        sourceWriter.write(System.getProperty("line.separator"));
+        sourceWriter.write("_e" + condIndex + ":");
+        sourceWriter.write(System.getProperty("line.separator"));
+        visit(node.getRight());
+        sourceWriter.write("_post_conditional" + condIndex + ":");
+        condIndex++;
+        sourceWriter.write(System.getProperty("line.separator"));
     }
 
     @SneakyThrows
@@ -144,31 +170,48 @@ public class Interpreter {
 
     @SneakyThrows
     public void visit_Compound(AST node) {
+        index++;
+        varStack.add(new HashMap<>());
         for (AST child : node.getChildren()) {
             if (child instanceof ReturnOp) {
+                if (callStack.size() == 0){
+                    varStack.remove(index);
+                    index--;
+                    return;
+                }
                 visit(child);
+                varStack.remove(index);
+                index--;
                 return;
             } else {
+                if (callStack.size() == 0){
+                    varStack.remove(index);
+                    index--;
+                    return;
+                }
                 visit(child);
             }
         }
+        varStack.remove(index);
+        index--;
     }
 
     @SneakyThrows
     public void visit_Assign(AST node) {
         String varName = node.getLeft().getValue();
-        if (varStack.containsKey(varName) && (node.getRight() == null)) {
+        HashMap<String, Integer> varStackMap = varStack.get(index);
+        if (varStackMap.containsKey(varName) && (node.getRight() == null)) {
             logger.warning(varName + " is already declared");
             throw new RuntimeException(varName + " is already declared");
         }
         if (node.getRight() == null) {
-            varStack.put(varName, stackIndex);
+            varStackMap.put(varName, stackIndex);
             //stackIndex = stackIndex - 4;
-        } else if (!varStack.containsKey(varName)) {
+        } else if (!varStackMap.containsKey(varName)) {
             visit(node.getRight());
             sourceWriter.write("push eax");
             sourceWriter.write(System.getProperty("line.separator"));
-            varStack.put(varName, stackIndex);
+            varStackMap.put(varName, stackIndex);
             stackIndex = stackIndex - 4;
         }
     }
@@ -176,28 +219,53 @@ public class Interpreter {
     @SneakyThrows
     public void visit_reAssign(AST node) {
         String varName = node.getLeft().getValue();
-        if (!varStack.containsKey(varName)) {
-            logger.warning(varName + " is not declared");
-            throw new RuntimeException(varName + " is not declared");
-        }
+        HashMap<String, Integer> varStackMap = getMapFromMapList(varName);
         visit(node.getRight());
         sourceWriter.write("push eax");
         sourceWriter.write(System.getProperty("line.separator"));
-        varStack.replace(varName, stackIndex);
+        varStackMap.replace(varName, stackIndex);
         stackIndex = stackIndex - 4;
     }
 
     @SneakyThrows
     public void visit_Var(AST node) {
         int varOffset;
-        try {
-             varOffset = varStack.get(node.getValue());
-        } catch (Exception ex) {
-            logger.warning(node.getToken().getValue() + " is not declared");
-            throw new RuntimeException(node.getToken().getValue() + " is not declared");
-        }
+        varOffset = getVarFromMapList(node.getValue());
         sourceWriter.write("mov eax" + ", [" + varOffset + " + ebp]");
         sourceWriter.write(System.getProperty("line.separator"));
+    }
+
+    public int getVarFromMapList(String varName) {
+        int varOffset = 100;
+        for (int i = index; i >= 0; i--){
+            try{
+                HashMap<String, Integer> varStackMap = varStack.get(i);
+                varOffset = varStackMap.get(varName);
+                i = 0;
+            } catch (Exception ignored) {
+            }
+        }
+        if (varOffset == 100) {
+            logger.warning(varName + " is not declared");
+            throw new RuntimeException(varName + " is not declared");
+        }
+        return varOffset;
+    }
+
+    public HashMap<String, Integer> getMapFromMapList(String varName) {
+        HashMap<String, Integer> result = null;
+        for (int i = index; i >= 0; i--){
+            HashMap<String, Integer> varStackMap = varStack.get(i);
+            if(varStackMap.containsKey(varName)){
+                result = varStackMap;
+                i = 0;
+            }
+        }
+        if(result == null) {
+            logger.warning(varName + " is not declared");
+            throw new RuntimeException(varName + " is not declared");
+        }
+        return result;
     }
 
     @SneakyThrows

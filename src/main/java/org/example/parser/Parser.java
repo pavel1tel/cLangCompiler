@@ -52,9 +52,16 @@ public class Parser {
         AST node = statement();
         List<AST> result = new ArrayList<>();
         result.add(node);
+        if (node instanceof Compound) {
+            result.add(statement());
+        }
         while (currentToken.getType().equals(Type.SEMI)) {
             eat(Type.SEMI);
-            result.add(statement());
+            AST res = statement();
+            result.add(res);
+            if (res instanceof Compound) {
+                result.add(statement());
+            }
         }
         return result;
     }
@@ -99,6 +106,14 @@ public class Parser {
         }
         eat(Type.ASSIGN);
         AST right = logic();
+        if (currentToken.getType().equals(Type.VOPROS)){
+            AST expr = right;
+            eat(Type.VOPROS);
+            AST leftt = logic();
+            eat(Type.DOTS);
+            AST rightt = logic();
+            return new Assing(new CondExp(leftt, rightt, expr), token, left, type);
+        }
         return new Assing(right, token, left, type);
     }
 
@@ -107,6 +122,14 @@ public class Parser {
         eat(Type.ASSIGN);
         Token token = currentToken;
         AST right = logic();
+        if (currentToken.getType().equals(Type.VOPROS)){
+            AST expr = right;
+            eat(Type.VOPROS);
+            AST leftt = logic();
+            eat(Type.DOTS);
+            AST rightt = logic();
+            return new reAssign(new CondExp(leftt, rightt, expr), token, left);
+        }
         return new reAssign(right, token, left);
     }
 

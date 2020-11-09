@@ -8,10 +8,8 @@ import java.util.logging.Logger;
 public class Lexer {
     private String text;
     private Integer pos;
-    private Integer prevPos;
     private Character currentChar;
     private int line = 1;
-    private int prevLine = 0;
     Logger logger = Logger.getLogger("logger");
 
     public Lexer(String text) {
@@ -47,7 +45,6 @@ public class Lexer {
     }
 
     public void advance() {
-        prevPos = pos;
         pos++;
         if(pos >(text.length()-1)) {
             currentChar = null;
@@ -57,15 +54,13 @@ public class Lexer {
     }
 
     public void skipWhiteSpaces() {
-        if (currentChar == '\n') {
+        if (currentChar == '\n' || currentChar == '\r') {
             if (text.split("\n", 2).length < 2){
                 advance();
                 return;
             }
-            prevPos = pos;
             pos = -1;
             text = text.split("\n", 2)[1];
-            prevLine = line;
             line++;
             advance();
             return;
@@ -107,16 +102,15 @@ public class Lexer {
                 skipWhiteSpaces();
                 continue;
             }
-            if (Character.isDigit(currentChar) && currentChar != '0') {
-                return new Token(Type.DECIMAL, parseInteger());
-            }
-
             if (Character.isDigit(currentChar) && currentChar == '0'){
                 if(peek() == 'x') {
                     advance();
                     advance();
                     return new Token(Type.HEX, parseHex());
                 }
+            }
+            if (Character.isDigit(currentChar)) {
+                return new Token(Type.DECIMAL, parseInteger());
             }
             if(Character.isAlphabetic(currentChar)) {
                 return id();
@@ -175,6 +169,13 @@ public class Lexer {
             if (currentChar.equals('}')){
                 advance();
                 return new Token(Type.RBRACER, "}");
+            }
+            if(currentChar.equals('?')) {
+                advance();
+                return new Token(Type.VOPROS, "?");
+            } if(currentChar.equals(':')) {
+                advance();
+                return new Token(Type.DOTS, ":");
             }
             logger.warning("Unrecognized token at line " + line + " position " + pos);
             throw new RuntimeException("Unrecognized token at line " + line + " position " + pos);
