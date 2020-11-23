@@ -20,12 +20,44 @@ public class Parser {
         this.currentToken = lexer.getNextToken();
     }
 
-    public AST mainFunction() {
+    public AST program(){
+        List<AST> functions = new ArrayList<>();
+        while (currentToken.getType()!=Type.EOF) {
+            functions.add(function());
+        }
+        return new Program(functions);
+    }
+
+    public AST function() {
         AST valueType = typeSpec();
-        eat(Type.MAIN);
+        List<AST> arguments = new ArrayList<>();
+        boolean isMain = currentToken.getValue().equals("main");
+        AST funcName = new Var(currentToken);
+        eat(Type.ID);
         eat(Type.LPARENT);
+        while(currentToken.getType().equals(Type.INT) || currentToken.getType().equals(Type.CHAR)){
+            arguments.add(argument());
+            if(currentToken.getType().equals(Type.COMMA)) {
+                eat(Type.COMMA);
+            }
+        }
         eat(Type.RPARENT);
-        return new MainBlock(compoundStatement(), valueType);
+        if (isMain) {
+            return new MainBlock(compoundStatement(), valueType);
+        } else {
+            if (currentToken.getType().equals(Type.SEMI)){
+                eat(Type.SEMI);
+                return new FuncDeclaration(funcName, arguments);
+            }
+            return new Function(compoundStatement(), funcName, arguments);
+        }
+    }
+
+    public AST argument() {
+        AST left = typeSpec();
+        AST right = new Var(currentToken);
+        eat(Type.ID);
+        return new Argument(left, right);
     }
 
     public AST typeSpec() {
@@ -118,7 +150,17 @@ public class Parser {
     }
 
     public AST reAssignStatment() {
+        Token var = currentToken;
         AST left = variable();
+        if (currentToken.getType().equals(Type.OR)){
+            Token tokenn = currentToken;
+            eat(Type.OR);
+            eat(Type.ASSIGN);
+            Token token = currentToken;
+            AST right = logic();
+            right = new BinOp(new Var(var),right , tokenn);
+            return new reAssign(right, token, left);
+        }
         eat(Type.ASSIGN);
         Token token = currentToken;
         AST right = logic();
@@ -182,14 +224,39 @@ public class Parser {
             AST node = expr();
             eat(Type.RPARENT);
             return node;
-        } else {
+        } else if(token.getType().equals(Type.ID)){
             try {
-                return variable();
+                Token tk = currentToken;
+                eat(Type.ID);
+                if (currentToken.getType().equals(Type.LPARENT)) {
+                    return functionCall(tk);
+                } else {
+                    return new Var(tk);
+                }
             } catch (Exception exception) {
+                System.out.println(currentToken);
                 logger.warning("expected value on line" + lexer.getLine() + " at " + pos);
                 throw new RuntimeException("expected value on line " + lexer.getLine() + " at " + pos);
             }
         }
+        else {
+            throw new RuntimeException();
+        }
+    }
+
+    private AST functionCall(Token funcName) {
+        List<AST> arguments = new ArrayList<>();
+        eat(Type.LPARENT);
+        do {
+            if(!currentToken.getType().equals(Type.RPARENT)) {
+                arguments.add(logic());
+            }
+            if(currentToken.getType().equals(Type.COMMA)) {
+                eat(Type.COMMA);
+            }
+        } while(!currentToken.getType().equals(Type.RPARENT));
+        eat(Type.RPARENT);
+        return new FunctionCall(new Var(funcName), arguments);
     }
 
     private AST logic() {
@@ -235,6 +302,6 @@ public class Parser {
     }
 
     public AST parse() {
-        return mainFunction();
+        return program();
     }
 }

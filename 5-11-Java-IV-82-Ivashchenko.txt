@@ -1,0 +1,11 @@
+int seven(int b, int a);
+
+int main(){
+    return seven(5, 6);
+}
+
+int seven(int b, int a) {
+    int k = 3;
+    k |= 5;
+    return a;
+}

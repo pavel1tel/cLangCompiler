@@ -2,6 +2,7 @@ package org.example.parser;
 
 import org.example.lexer.Token;
 
+//TODO add arguments
 public class MainBlock extends AST{
 
     private final AST expr;

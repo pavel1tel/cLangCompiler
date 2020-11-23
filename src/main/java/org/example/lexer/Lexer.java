@@ -176,6 +176,9 @@ public class Lexer {
             } if(currentChar.equals(':')) {
                 advance();
                 return new Token(Type.DOTS, ":");
+            } if(currentChar.equals(',')) {
+                advance();
+                return new Token(Type.COMMA, ",");
             }
             logger.warning("Unrecognized token at line " + line + " position " + pos);
             throw new RuntimeException("Unrecognized token at line " + line + " position " + pos);

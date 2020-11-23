@@ -17,7 +17,7 @@ import java.util.logging.SimpleFormatter;
  */
 public class App {
     public static void main(String[] args) throws IOException {
-        File file = new File("4-11-Java-IV-82-Ivashchenko.txt");
+        File file = new File("5-11-Java-IV-82-Ivashchenko.txt");
         Scanner scanner = new Scanner(file);
         StringBuilder text = new StringBuilder();
         while (scanner.hasNextLine()) {
@@ -25,23 +25,17 @@ public class App {
         }
         Logger logger = Logger.getLogger("logger");
         logger.setUseParentHandlers(false);
-        FileHandler fh = new FileHandler("4-11-Java-IV-82-Ivashchenko.log");
+        FileHandler fh = new FileHandler("5-11-Java-IV-82-Ivashchenko.log");
         logger.addHandler(fh);
         scanner.close();
         SimpleFormatter formatter = new SimpleFormatter();
         fh.setFormatter(formatter);
-        Token token;
-        Lexer lex = new Lexer(text.toString());
-        do {
-            token = lex.getNextToken();
-            logger.info(token.toString());
-        }while(!token.getType().equals(Type.EOF));
         Lexer lexer = new Lexer(text.toString());
         Parser parser = new Parser(lexer);
-        File sourceFile = new File("4-11-Java-IV-82-Ivashchenko.asm");
+        File sourceFile = new File("5-11-Java-IV-82-Ivashchenko.asm");
         FileWriter sourceWriter = new FileWriter(sourceFile);
         Interpreter interpreter = new Interpreter(sourceWriter, parser);
         interpreter.interpreter();
-
+        fh.close();
     }
 }

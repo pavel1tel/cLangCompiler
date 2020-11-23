@@ -1,10 +1,12 @@
 package org.example.interpreter;
 
+import javafx.util.Pair;
 import lombok.SneakyThrows;
 import org.example.lexer.Type;
 import org.example.parser.*;
 
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,12 +17,15 @@ public class Interpreter {
     private final Parser parser;
     private final Stack<AST> callStack;
     private String returnRegister = "eax";
-    private boolean first = true;
+    private boolean afterMain = false;
     int condIndex = 3;
     Logger logger = Logger.getLogger("logger");
     int index = -1;
+    int functionIndex = -1;
     List<HashMap<String, Integer>> varStack = new ArrayList<>();
+    List<HashMap<String, Integer>> argStack = new ArrayList<>();
     Integer stackIndex = -4;
+    HashMap<String, Pair<Boolean, Integer>> functions = new HashMap<>();
 
     public Interpreter(FileWriter sourceWriter, Parser parser) {
         this.sourceWriter = sourceWriter;
@@ -67,7 +72,103 @@ public class Interpreter {
             visit_condExp(node);
             return;
         }
-        throw new RuntimeException();
+        else if (node instanceof Function) {
+            visit_function(node);
+            return;
+        }
+        if (node instanceof Program) {
+            visit_Program(node);
+            return;
+        }
+        if (node instanceof FunctionCall) {
+            visit_FunctionCall(node);
+            return;
+        }
+        if (node instanceof FuncDeclaration) {
+            visit_FuncDeclaration(node);
+            return;
+        }
+        throw new RuntimeException(node.getClass().toString());
+    }
+
+    private void visit_FuncDeclaration(AST node) {
+        functions.put(node.getValueType().getValue(), new Pair<>(false, node.getChildren().size()));
+    }
+
+    @SneakyThrows
+    private void visit_FunctionCall(AST node){
+        for(AST expr : node.getChildren()){
+            visit(expr);
+            sourceWriter.write("push eax");
+            sourceWriter.write(System.getProperty("line.separator"));
+        }
+        sourceWriter.write("call " + node.getLeft().getValue());
+        sourceWriter.write(System.getProperty("line.separator"));
+        if (!functions.containsKey(node.getLeft().getValue())){
+            logger.warning("function " + node.getLeft().getValue() + " is not defined or defined after main");
+            return;
+        }
+        if (functions.get(node.getLeft().getValue()).getValue() != node.getChildren().size()){
+            logger.warning("expected arguments : " + functions.get(node.getLeft().getValue()).getValue() +"\n given: " + node.getChildren().size());
+            throw new RuntimeException("expected arguments : " + functions.get(node.getLeft().getValue()).getValue() +"\n given: " + node.getChildren().size());
+        }
+    }
+
+    @SneakyThrows
+    private void visit_function(AST node) {
+        functionIndex++;
+        argStack.add(new HashMap<>());
+        stackIndex = -4;
+        sourceWriter.write(System.getProperty("line.separator"));
+        if (!functions.containsKey(node.getValueType().getValue())){
+            if (afterMain) {
+                logger.warning("implicit declaration of function: " + node.getValueType().getValue());
+            } else {
+                functions.put(node.getValueType().getValue(), new Pair<>(true, node.getChildren().size()));
+            }
+        } else if(!functions.get(node.getValueType().getValue()).getKey() && functions.get(node.getValueType().getValue()).getValue() == node.getChildren().size()){
+            functions.replace(node.getValueType().getValue(), new Pair<>(true, node.getChildren().size()));
+        } else if(functions.get(node.getValueType().getValue()).getValue() != node.getChildren().size()){
+            if (afterMain) {
+                logger.warning("implicit declaration of function: " + node.getValueType().getValue());
+            } else {
+                functions.replace(node.getValueType().getValue(), new Pair<>(true, node.getChildren().size()));
+            }
+        }
+        sourceWriter.write(node.getValueType().getValue() + ":");
+        sourceWriter.write(System.getProperty("line.separator"));
+        sourceWriter.write("push ebp");
+        sourceWriter.write(System.getProperty("line.separator"));
+        sourceWriter.write("mov ebp, esp");
+        sourceWriter.write(System.getProperty("line.separator"));
+        callStack.push(node);
+        int i = node.getChildren().size();
+        for (AST args : node.getChildren()) {
+            sourceWriter.write("mov eax, [ebp + " + (i*4 + 4) + "]");
+            sourceWriter.write(System.getProperty("line.separator"));
+            sourceWriter.write("push eax");
+            sourceWriter.write(System.getProperty("line.separator"));
+            String varName = args.getRight().getValue();
+            HashMap<String, Integer> argStackMap = argStack.get(functionIndex);
+            argStackMap.put(varName, stackIndex);
+            stackIndex = stackIndex - 4;
+            i--;
+        }
+        visit(node.getExpr());
+        sourceWriter.write("ret " + node.getChildren().size() * 4);
+        sourceWriter.write(System.getProperty("line.separator"));
+        argStack.remove(functionIndex);
+        functionIndex--;
+    }
+
+    @SneakyThrows
+    private void visit_Program(AST node) {
+        sourceWriter.write("jmp mainn");
+        sourceWriter.write(System.getProperty("line.separator"));
+        node.getChildren().forEach(this::visit);
+        sourceWriter.write(System.getProperty("line.separator"));
+        sourceWriter.write("_end:");
+        sourceWriter.write(System.getProperty("line.separator"));
     }
 
     @SneakyThrows
@@ -97,6 +198,10 @@ public class Interpreter {
 
     @SneakyThrows
     private void visit_Main(AST node) {
+        stackIndex = -4;
+        sourceWriter.write(System.getProperty("line.separator"));
+        sourceWriter.write("mainn:");
+        sourceWriter.write(System.getProperty("line.separator"));
         sourceWriter.write("push ebp");
         sourceWriter.write(System.getProperty("line.separator"));
         sourceWriter.write("mov ebp, esp");
@@ -110,6 +215,11 @@ public class Interpreter {
         }
         //sourceWriter.write("main()");
         visit(node.getExpr());
+        sourceWriter.write("mov b, " + returnRegister);
+        sourceWriter.write(System.getProperty("line.separator"));
+        sourceWriter.write("jmp _end");
+        sourceWriter.write(System.getProperty("line.separator"));
+        afterMain = true;
     }
 
     @lombok.SneakyThrows
@@ -174,21 +284,21 @@ public class Interpreter {
         varStack.add(new HashMap<>());
         for (AST child : node.getChildren()) {
             if (child instanceof ReturnOp) {
-                if (callStack.size() == 0){
-                    varStack.remove(index);
-                    index--;
-                    return;
-                }
+//                if (callStack.size() == 0){
+//                    varStack.remove(index);
+//                    index--;
+//                    return;
+//                }
                 visit(child);
                 varStack.remove(index);
                 index--;
                 return;
             } else {
-                if (callStack.size() == 0){
-                    varStack.remove(index);
-                    index--;
-                    return;
-                }
+//                if (callStack.size() == 0){
+//                    varStack.remove(index);
+//                    index--;
+//                    return;
+//                }
                 visit(child);
             }
         }
@@ -245,6 +355,14 @@ public class Interpreter {
             } catch (Exception ignored) {
             }
         }
+        for (int i = functionIndex; i >= 0; i--){
+            try{
+                HashMap<String, Integer> argStackMap = argStack.get(i);
+                varOffset = argStackMap.get(varName);
+                i = 0;
+            } catch (Exception ignored) {
+            }
+        }
         if (varOffset == 100) {
             logger.warning(varName + " is not declared");
             throw new RuntimeException(varName + " is not declared");
@@ -259,6 +377,16 @@ public class Interpreter {
             if(varStackMap.containsKey(varName)){
                 result = varStackMap;
                 i = 0;
+            }
+        }
+        for (int i = functionIndex; i >= 0; i--){
+            try{
+                HashMap<String, Integer> argStackMap = argStack.get(i);
+                if(argStackMap.containsKey(varName)){
+                    result = argStackMap;
+                    i = 0;
+                }
+            } catch (Exception ignored) {
             }
         }
         if(result == null) {
@@ -293,7 +421,6 @@ public class Interpreter {
         sourceWriter.write(System.getProperty("line.separator"));
         sourceWriter.write("pop ebp");
         sourceWriter.write(System.getProperty("line.separator"));
-        sourceWriter.write("mov b, " + returnRegister);
         callStack.pop();
     }
 
